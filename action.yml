@@ -1,0 +1,106 @@
+name: 'ZyAction: .NET Lint'
+
+author: Florian Bernd
+description: A GitHub Action to lint .NET projects.
+
+branding:
+  icon: code
+  color: purple
+
+inputs:
+  workspace:
+    description: The Visual Studio workspace (directory, project- or solution-file).
+    type: string
+    required: false
+    default: ''
+  diagnostics:
+    description: >
+      A newline-separated list of diagnostic IDs to use as a filter when linting code style or
+      third-party issues. Supports multiline strings.
+
+      Default value is whichever IDs are listed in the  `.editorconfig` file.
+    type: string
+    required: false
+    default: ''
+  severity:
+    description: >
+      The minimum severity of diagnostics to lint.
+
+      Possible values:
+      - info
+      - warn
+      - error
+
+      The default value is `warn`.
+    type: string
+    required: false
+    default: ''
+  include:
+    description: >
+      A newline-separated list of relative file or folder paths to include in linting.
+
+      The default is all files in the solution or project.
+
+      Use `-` to read the list of files from the `pipe` input.
+    type: string
+    required: false
+    default: ''
+  exclude:
+    description: >
+      A newline-separated list of relative file or folder paths to exclude from linting.
+
+      The default is none.
+
+      Use `-` to read the list of files from the `pipe` input.
+    type: string
+    required: false
+    default: ''
+  report-path:
+    description: Produces a JSON report in the specified directory.
+    type: string
+    required: false
+    default: ''
+  implicit-restore:
+    description: Execute an implicit restore before linting.
+    type: boolean
+    required: false
+    default: false
+  pipe:
+    description: >
+      An optional pipe input from which the `include` or `exclude` filenames are to be read.
+
+      This must be set to a valid shell command line (bash) that can be used for piping. The
+      command must output to `stdout` and separate the individual filenames by line breaks.
+
+      WARNING:
+      The command passed to this input will be evaluated and should not come from untrusted
+      sources.
+    type: string
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Add Problem Matcher
+      shell: bash
+      run: |
+        echo "::add-matcher::${{ github.action_path }}/problem-matcher.json"
+
+    - name: .NET Lint
+      uses: zyactions/dotnet-format@36814a884879e7dafb9c74df549777e7297659c2 # v1.0.0
+      with:
+        workspace: ${{ inputs.workspace }}
+        diagnostics: ${{ inputs.diagnostics }}
+        severity: ${{ inputs.severity }}
+        verify-no-changes: true
+        include: ${{ inputs.include }}
+        exclude: ${{ inputs.exclude }}
+        implicit-restore: ${{ inputs.implicit-restore }}
+        pipe: ${{ inputs.pipe }}
+
+    - name: Remove Problem Matcher
+      if: always()
+      shell: bash
+      run: |
+        echo "::remove-matcher owner=dotnet-format::"

@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Mitigate an issue with the current `macOS` runner-image as of 22/12/2022 where
+      # the `dotnet-format` command fails with 'Unable to locate MSBuild'..
+      - name: 'Create "global.json"'
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          cat <<EOF >> global.json
+          {
+              "sdk": {
+                "version": "6.0.100",
+                "allowPrerelease": false,
+                "rollForward": "latestFeature"
+              }
+          }
+          EOF
+
+      - name: .NET Setup
+        uses: zyactions/dotnet-setup@v1
+
+      - name: .NET Restore
+        uses: zyactions/dotnet-restore@v1
+        with:
+          workspace: test
+
+      - name: .NET Lint
+        continue-on-error: true
+        uses: ./
+        with:
+          workspace: test
+
+      - name: .NET Lint Project
+        continue-on-error: true
+        uses: ./
+        with:
+          workspace: test/Test.csproj
