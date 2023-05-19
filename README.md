@@ -79,11 +79,23 @@ steps:
 
 ## Inputs
 
+### `working-directory`
+
+The working-directory for the action.
+
+Defaults to the repository root directory (`github.workspace`).
+
+> **Note**
+>
+> If a specific .NET SDK version is to be used, the working directory must point to the directory that contains the `global.json` or a subdirectory of it.
+
 ### `workspace`
 
 The Visual Studio workspace (directory, project- or solution-file).
 
-The `dotnet restore` command automatically searches for a Visual Studio Solution file (`*.sln`) in the specified workspace directory, if no explicit solution- or project- file is specified.
+This path is relative to the `working-directory` unless an absolute path is used.
+
+The `dotnet format` command automatically searches for a Visual Studio Solution file (`*.sln`) in the specified workspace directory, if no explicit solution- or project- file is specified.
 
 Example values:
 
@@ -120,6 +132,10 @@ Produces a JSON report in the specified directory.
 ### `implicit-restore`
 
 Execute an implicit restore before linting.
+
+### `use-standalone-tool`
+
+Uses the standalone version of the `dotnet-format` tool instead of the version bundled with the .NET SDK.
 
 ### `pipe`
 

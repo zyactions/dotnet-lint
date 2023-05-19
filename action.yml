@@ -8,8 +8,22 @@ branding:
   color: purple
 
 inputs:
+  working-directory:
+    description: >
+      The working-directory for the action.
+
+      Defaults to the repository root directory (`github.workspace`).
+
+      If a specific .NET SDK version is to be used, the working directory must point to the
+      directory that contains the `global.json` or a subdirectory of it.
+    type: string
+    required: false
+    default: ${{ github.workspace }}
   workspace:
-    description: The Visual Studio workspace (directory, project- or solution-file).
+    description: >
+      The Visual Studio workspace (directory, project- or solution-file).
+
+      This path is relative to the `working-directory` unless an absolute path is used.
     type: string
     required: false
     default: ''
@@ -65,6 +79,13 @@ inputs:
     type: boolean
     required: false
     default: false
+  use-standalone-tool:
+    description: >
+      Uses the standalone version of the `dotnet-format` tool instead of the version bundled
+      with the .NET SDK.
+    type: boolean
+    required: false
+    default: false
   pipe:
     description: >
       An optional pipe input from which the `include` or `exclude` filenames are to be read.
@@ -88,8 +109,9 @@ runs:
         echo "::add-matcher::${{ github.action_path }}/problem-matcher.json"
 
     - name: .NET Lint
-      uses: zyactions/dotnet-format@36814a884879e7dafb9c74df549777e7297659c2 # v1.0.0
+      uses: zyactions/dotnet-format@059ebd22ce2c9b54ee5efc30e65dde422547dadf # v1.1.0
       with:
+        working-directory: ${{ inputs.working-directory }}
         workspace: ${{ inputs.workspace }}
         diagnostics: ${{ inputs.diagnostics }}
         severity: ${{ inputs.severity }}
@@ -97,6 +119,7 @@ runs:
         include: ${{ inputs.include }}
         exclude: ${{ inputs.exclude }}
         implicit-restore: ${{ inputs.implicit-restore }}
+        use-standalone-tool: ${{ inputs.use-standalone-tool }}
         pipe: ${{ inputs.pipe }}
 
     - name: Remove Problem Matcher
